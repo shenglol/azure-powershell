@@ -18,8 +18,13 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     using System.Management.Automation;
     using Common.ArgumentCompleters;
     using Management.ResourceManager.Models;
+    using Newtonsoft.Json;
     using SdkModels.Deployments;
+    using System.Globalization;
     using WindowsAzure.Commands.Utilities.Common;
+    using Properties;
+    using Rest.Azure;
+    using System.Collections.Generic;
 
     /// <summary>
     /// Creates a new deployment what-if.
@@ -81,45 +86,90 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 
         public override void ExecuteCmdlet()
         {
-            var parameters = new PSDeploymentWhatIfCmdletParameters
-            {
-                DeploymentName = this.Name,
-                Location = this.Location,
-                ScopeType = this.ScopeType,
-                Mode = this.Mode,
-                ResourceGroupName = this.ResourceGroupName,
-                TemplateUri = Uri.IsWellFormedUriString(this.TemplateFile, UriKind.Absolute)
-                    ? this.TemplateFile
-                    : this.TryResolvePath(this.TemplateFile),
-                TemplateParametersUri = this.TemplateParameterFile,
-                TemplateObject = this.TemplateObject,
-                TemplateParametersObject = this.GetTemplateParameterObject(this.TemplateParameterObject),
-                ResultFormat = this.ResultFormat
-            };
+            const string statusMessage = "Getting the latest status of all resources...";
+            var clearMessage = new string(' ', statusMessage.Length);
+            var information = new HostInformationMessage { Message = statusMessage, NoNewLine = true };
+            var clearInformation = new HostInformationMessage { Message = $"\r{clearMessage}\r", NoNewLine = true };
+            var tags = new[] { "PSHOST" };
 
             try
             {
+                var parameters = new PSDeploymentWhatIfCmdletParameters
+                {
+                    DeploymentName = this.Name,
+                    Location = this.Location,
+                    ScopeType = this.ScopeType,
+                    Mode = this.Mode,
+                    ResourceGroupName = this.ResourceGroupName,
+                    TemplateUri = Uri.IsWellFormedUriString(this.TemplateFile, UriKind.Absolute)
+                        ? this.TemplateFile
+                        : this.TryResolvePath(this.TemplateFile),
+                    TemplateParametersUri = this.TemplateParameterFile,
+                    TemplateObject = this.TemplateObject,
+                    TemplateParametersObject = this.GetTemplateParameterObject(this.TemplateParameterObject),
+                    ResultFormat = this.ResultFormat
+                };
+
                 parameters.Validate();
+
+                // Write status.
+                this.WriteInformation(information, tags);
+
+                PSWhatIfOperationResult result = ResourceManagerSdkClient.ExecuteDeploymentWhatIf(parameters);
+
+                // Clear status before writing result.
+                this.WriteInformation(clearInformation, tags);
+
+                this.WriteObject(result);
+            }
+            catch (CloudException ce)
+            {
+                // Clear status before handling exception.
+                this.WriteInformation(clearInformation, tags);
+                this.HandleException(ce);
             }
             catch (Exception e)
             {
-                WriteExceptionError(e);
+                // Clear status before handling exception.
+                this.WriteInformation(clearInformation, tags);
+                this.HandleException(e);
+            }
+        }
+
+        private static string GetRequestId(CloudException ce)
+        {
+            if (!string.IsNullOrEmpty(ce.RequestId))
+            {
+                return ce.RequestId;
             }
 
-            // Write status.
-            const string statusMessage = "Getting the latest status of all resources...";
-            var information = new HostInformationMessage { Message = statusMessage, NoNewLine = true };
-            var tags = new[] { "PSHOST" };
-            this.WriteInformation(information, tags);
+            if (ce.Response?.Headers != null &&
+                ce.Response.Headers.TryGetValue("x-ms-request-id", out IEnumerable<string> requestIdValues))
+            {
+                return string.Join(";", requestIdValues);
+            }
 
-            PSWhatIfOperationResult result = ResourceManagerSdkClient.ExecuteDeploymentWhatIf(parameters);
+            return string.Empty;
+        }
 
-            // Clear status before writing result.
-            var clearMessage = new string(' ', statusMessage.Length);
-            information = new HostInformationMessage { Message = $"\r{clearMessage}\r", NoNewLine = true };
-            this.WriteInformation(information, tags);
+        private void HandleException(CloudException ce)
+        {
+            var formattedException = new CloudException(string.Format(
+                CultureInfo.InvariantCulture,
+                Resources.FormattedCloudExceptionMessageTemplate,
+                ce.Response?.StatusCode,
+                ce.Body?.Code ?? ce.Response?.StatusCode.ToString(),
+                ce.Body?.Message ?? ce.Message,
+                JsonConvert.SerializeObject(ce.Body?.Details, Formatting.Indented),
+                GetRequestId(ce),
+                DateTime.UtcNow));
 
-            this.WriteObject(result);
+            this.WriteExceptionError(formattedException);
+        }
+
+        private void HandleException(Exception e)
+        {
+            this.WriteExceptionError(e);
         }
     }
 }
