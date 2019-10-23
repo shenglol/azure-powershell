@@ -76,7 +76,8 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Formatters
 
         protected static bool IsLeaf(JToken value)
         {
-            return value is JValue ||
+            return value == null ||
+                   value is JValue ||
                    value is JArray arrayValue && arrayValue.Count == 0 ||
                    value is JObject objectValue && objectValue.Count == 0;
         }
