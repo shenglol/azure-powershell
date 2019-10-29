@@ -244,7 +244,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Formatters
                 string childPath = isRoot ? property.Key : $"{path}{Symbol.Dot}{property.Key}";
                 this.FormatJson(property.Value, childPath, maxPathLength, indentLevel);
 
-                if (!(property.Value is JObject))
+                if (property.Value is JArray || IsLeaf(property.Value))
                 {
                     // Object end.
                     this.Builder.AppendLine();

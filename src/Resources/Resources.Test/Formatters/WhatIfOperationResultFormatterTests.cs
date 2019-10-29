@@ -19,11 +19,30 @@ namespace Microsoft.Azure.Commands.Resources.Test.Formatters
     using ResourceManager.Cmdlets.Formatters;
     using ResourceManager.Cmdlets.SdkModels.Deployments;
     using System;
+    using System.Linq;
     using WindowsAzure.Commands.ScenarioTest;
     using Xunit;
 
     public class WhatIfOperationResultFormatterTests
     {
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void Format_OnSuccess_FormatPreviewNotice()
+        {
+            // Arrange.
+            var psWhatIfOperationResult = new PSWhatIfOperationResult(new WhatIfOperationResult());
+            string previewNotice = new ColorStringBuilder()
+                .AppendLine("Note: As What-If is currently in preview, the result may contain false positive predictions (noises).")
+                .AppendLine("You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues.")
+                .ToString();
+
+            // Act.
+            string result = WhatIfOperationResultFormatter.Format(psWhatIfOperationResult);
+
+            // Assert.
+            Assert.StartsWith(previewNotice, result);
+        }
+
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void Format_EmptyResourceChanges_ReturnsNoChangeInfo()
@@ -39,7 +58,7 @@ namespace Microsoft.Azure.Commands.Resources.Test.Formatters
             string result = WhatIfOperationResultFormatter.Format(psWhatIfOperationResult);
 
             // Assert.
-            Assert.Equal(noChangeInfo, result);
+            Assert.Contains(noChangeInfo, result);
         }
 
         [Fact]
@@ -88,7 +107,7 @@ namespace Microsoft.Azure.Commands.Resources.Test.Formatters
             string result = WhatIfOperationResultFormatter.Format(psWhatIfOperationResult);
 
             // Assert.
-            Assert.StartsWith(legend, result);
+            Assert.Contains(legend, result);
         }
 
         [Fact]

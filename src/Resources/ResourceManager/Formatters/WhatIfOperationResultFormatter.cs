@@ -23,6 +23,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Formatters
     using Microsoft.WindowsAzure.Commands.Utilities.Common;
     using Newtonsoft.Json.Linq;
     using SdkModels.Deployments;
+    using Properties;
 
     public class WhatIfOperationResultFormatter : WhatIfJsonFormatter
     {
@@ -34,11 +35,19 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Formatters
         {
             var formatter = new WhatIfOperationResultFormatter();
 
+            formatter.FormatPreviewNotice();
             formatter.FormatLegend(result.Changes);
             formatter.FormatResourceChanges(result.Changes);
             formatter.FormatStats(result.Changes);
 
             return formatter.Result;
+        }
+
+        private void FormatPreviewNotice()
+        {
+            this.Builder
+                .AppendLine(Resources.WhatIfPreviewNotice)
+                .AppendLine();
         }
 
         private static int GetMaxPathLength(IList<PSWhatIfPropertyChange> propertyChanges)
