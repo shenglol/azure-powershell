@@ -32,7 +32,7 @@ namespace Microsoft.Azure.Commands.Resources.Test.Formatters
             // Arrange.
             var psWhatIfOperationResult = new PSWhatIfOperationResult(new WhatIfOperationResult());
             string previewNotice = new ColorStringBuilder()
-                .AppendLine("Note: As What-If is currently in preview, the result may contain false positive predictions (noises).")
+                .AppendLine("Note: As What-If is currently in preview, the result may contain false positive predictions (noise).")
                 .AppendLine("You can help us improve the accuracy of the result by opening an issue here: https://aka.ms/WhatIfIssues.")
                 .ToString();
 
