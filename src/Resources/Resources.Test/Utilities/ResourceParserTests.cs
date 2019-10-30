@@ -16,45 +16,49 @@ namespace Microsoft.Azure.Commands.Resources.Test.Utilities
 {
     using ResourceManager.Cmdlets.Utilities;
     using System;
+    using WindowsAzure.Commands.ScenarioTest;
     using Xunit;
 
     public class ResourceParserTests
     {
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ParseResourceId_WithSubscriptionLevelProvider_ReturnsSubscriptionScope()
         {
             Guid subscriptionId = Guid.NewGuid();
             Guid roleAssignmentId = Guid.NewGuid();
 
-            (string scope, string relativePath) = ResourceIdParser.ParseResourceId(
+            (string scope, string shortResourceId) = ResourceIdParser.ParseResourceId(
                 $"/subscriptions/{subscriptionId}/providers/Microsoft.Authorization/roleAssignment/{roleAssignmentId}");
 
             Assert.Equal($"/subscriptions/{subscriptionId}", scope);
-            Assert.Equal($"Microsoft.Authorization/roleAssignment/{roleAssignmentId}", relativePath);
+            Assert.Equal($"Microsoft.Authorization/roleAssignment/{roleAssignmentId}", shortResourceId);
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ParseResourceId_WithResourceScopeLevelProvider_ReturnsResourceGroupScope()
         {
             Guid subscriptionId = Guid.NewGuid();
 
-            (string scope, string relativePath) = ResourceIdParser.ParseResourceId(
+            (string scope, string shortResourceId) = ResourceIdParser.ParseResourceId(
                 $"/subscriptions/{subscriptionId}/resourceGroups/test-what-if-rg/providers/Microsoft.Sql/servers/TestServer");
 
             Assert.Equal($"/subscriptions/{subscriptionId}/resourceGroups/test-what-if-rg", scope);
-            Assert.Equal("Microsoft.Sql/servers/TestServer", relativePath);
+            Assert.Equal("Microsoft.Sql/servers/TestServer", shortResourceId);
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ParseResourceId_ResourceGroupAsResource_ReturnsSubscriptionScope()
         {
             Guid subscriptionId = Guid.NewGuid();
 
-            (string scope, string relativePath) = ResourceIdParser.ParseResourceId(
+            (string scope, string shortResourceId) = ResourceIdParser.ParseResourceId(
                 $"/subscriptions/{subscriptionId}/resourceGroups/test-what-if-rg");
 
             Assert.Equal($"/subscriptions/{subscriptionId}", scope);
-            Assert.Equal("/resourceGroups/test-what-if-rg", relativePath);
+            Assert.Equal("resourceGroups/test-what-if-rg", shortResourceId);
         }
     }
 }

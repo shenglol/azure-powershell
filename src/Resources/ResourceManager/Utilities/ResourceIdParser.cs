@@ -18,14 +18,16 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Utilities
 
     public static class ResourceIdParser
     {
+        private const RegexOptions RxOptions = RegexOptions.IgnoreCase;
+
         private static readonly Regex SubscriptionRegex =
-            new Regex(@"^\/?subscriptions\/(?<subscriptionId>[a-f0-9-]+)", RegexOptions.IgnoreCase);
+            new Regex(@"^\/?subscriptions\/(?<subscriptionId>[a-f0-9-]+)", RxOptions);
 
         private static readonly Regex ResourceGroupRegex =
-            new Regex(@"^\/resourceGroups\/(?<resourceGroupName>[-\w\._\(\)]+)");
+            new Regex(@"^\/resourceGroups\/(?<resourceGroupName>[-\w\._\(\)]+)", RxOptions);
 
         private static readonly Regex ShortResourceIdRegex =
-            new Regex(@"^\/providers/(?<shortResourceId>.+$)");
+            new Regex(@"^\/providers/(?<shortResourceId>.+$)", RxOptions);
 
         
         /// <summary>
@@ -57,7 +59,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Utilities
             // the relativePath but not the scope.
             if (subscriptionMatch.Success && resourceGroupMatch.Success && !shortResourceIdMatch.Success)
             {
-                shortResourceId = $"Microsoft.Resources/resourceGroups/{resourceGroupName}";
+                shortResourceId = $"resourceGroups/{resourceGroupName}";
                 resourceGroupName = string.Empty;
             }
 
