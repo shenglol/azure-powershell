@@ -216,6 +216,19 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Formatters
                 .Append(Symbol.WhiteSpace)
                 .Append(resourceChange.ShortResourceId);
 
+            // API version.
+            if (!string.IsNullOrEmpty(resourceChange.ApiVersion))
+            {
+                using (this.Builder.NewColorScope(Color.Reset))
+                {
+                    this.Builder
+                        .Append(Symbol.WhiteSpace)
+                        .Append(Symbol.LeftSquareBracket)
+                        .Append(resourceChange.ApiVersion)
+                        .Append(Symbol.RightSquareBracket);
+                }
+            }
+
             // Print properties.
             switch (resourceChange.ChangeType)
             {

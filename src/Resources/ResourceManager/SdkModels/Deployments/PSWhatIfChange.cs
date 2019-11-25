@@ -27,6 +27,9 @@
 
         public string FullResourceId => whatIfChange.ResourceId;
 
+        public string ApiVersion =>
+            this.Before?["apiVersion"]?.Value<string>() ?? this.After?["apiVersion"]?.Value<string>();
+
         public ChangeType ChangeType => this.whatIfChange.ChangeType;
 
         public JToken Before => new Lazy<JToken>(() => whatIfChange.Before.ToJToken()).Value;

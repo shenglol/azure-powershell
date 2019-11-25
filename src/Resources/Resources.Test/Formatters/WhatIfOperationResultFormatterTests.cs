@@ -16,6 +16,7 @@ namespace Microsoft.Azure.Commands.Resources.Test.Formatters
 {
     using System.Collections.Generic;
     using Management.ResourceManager.Models;
+    using Newtonsoft.Json.Linq;
     using ResourceManager.Cmdlets.Formatters;
     using ResourceManager.Cmdlets.SdkModels.Deployments;
     using System;
@@ -154,6 +155,37 @@ namespace Microsoft.Azure.Commands.Resources.Test.Formatters
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void Format_NonEmptyResourceChanges_ExtractApiVersion()
+        {
+            // Arrange.
+            var whatIfChanges = new List<WhatIfChange>
+            {
+                new WhatIfChange
+                {
+                    ResourceId = "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg1/providers/p2/foo",
+                    ChangeType = ChangeType.Modify,
+                    Before = new { apiVersion = "2018-07-01" },
+                    After = new { apiVersion = "2018-07-01" }
+                },
+            };
+
+            string changesInfo = $@"
+Scope: /subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg1
+{Color.Purple}
+  ~ p2/foo{Color.Reset} [2018-07-01]{Color.Purple}
+{Color.Reset}"
+                .Replace("\r\n", Environment.NewLine);
+
+            // Act.
+            string result = WhatIfOperationResultFormatter.Format(
+                new PSWhatIfOperationResult(new WhatIfOperationResult(changes: whatIfChanges)));
+
+            // Assert.
+            Assert.Contains(changesInfo, result);
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void Format_NonEmptyResourceChanges_SortsAndGroupsThemByScopeAndChangeType()
         {
             // Arrange.
@@ -199,8 +231,8 @@ Scope: /subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg1
 {Color.Reset}
 Scope: /subscriptions/00000000-0000-0000-0000-000000000002
 {Color.Orange}
-  - Microsoft.Resources/resourceGroups/rg3
-  - p3/foobar2{Color.Reset}{Color.Gray}
+  - p3/foobar2
+  - resourceGroups/rg3{Color.Reset}{Color.Gray}
   * p3/foobar1
 {Color.Reset}
 Scope: /subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/rg2
